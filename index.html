@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리 반 작품 갤러리</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Jua (귀여운 제목용) 및 Noto Sans KR (깔끔한 본문용) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons 로드 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'cute': ['"Jua"', 'sans-serif'],
+                        'sans': ['"Noto Sans KR"', 'sans-serif'],
+                    },
+                    colors: {
+                        cream: '#FFFDF7',
+                        mint: {
+                            light: '#E6F7F2',
+                            DEFAULT: '#4FD1C5',
+                            dark: '#319795',
+                        },
+                        coral: {
+                            light: '#FFF0ED',
+                            DEFAULT: '#FF7E67',
+                            dark: '#E55A43',
+                        },
+                        butter: {
+                            light: '#FEF9E7',
+                            DEFAULT: '#F6E05E',
+                            dark: '#D69E2E',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 커스텀 스크롤바 및 미세 애니메이션 */
+        body {
+            background-color: #FFFDF7;
+            background-image: radial-gradient(#F3EFE0 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+        .card-hover {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-6px);
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .animate-pop {
+            animation: pop 0.3s ease-in-out;
+        }
+        /* 모달 스크롤바 숨김 처리 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-slate-700 font-sans min-h-screen flex flex-col">
+
+    <!-- 알림 토스트 메시지 (alert 대체) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- 1. 상단 헤더 영역 -->
+    <header class="bg-white/90 backdrop-blur-md border-b-2 border-amber-100 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- 학급 타이틀 & 인사말 (클릭 시 수정 가능) -->
+            <div class="flex items-center gap-3 text-center sm:text-left">
+                <div class="w-12 h-12 rounded-2xl bg-butter-light border-2 border-butter flex items-center justify-center text-2xl shadow-sm shrink-0">
+                    🎨
+                </div>
+                <div>
+                    <div class="flex items-center justify-center sm:justify-start gap-2 group">
+                        <h1 id="class-title" class="font-cute text-2xl sm:text-3xl text-slate-800 tracking-wide cursor-pointer hover:text-coral transition-colors" title="클릭해서 학급 이름을 바꿀 수 있어요!">
+                            해바라기반 작품 갤러리
+                        </h1>
+                        <button onclick="openEditClassModal()" class="p-1.5 text-slate-400 hover:text-coral hover:bg-coral-light rounded-full transition-colors" title="학급 정보 수정">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p id="class-subtitle" class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        우리 반 친구들의 반짝반짝 빛나는 생각과 솜씨를 구경해 보세요! ✨
+                    </p>
+                </div>
+            </div>
+
+            <!-- 작품 올리기 버튼 -->
+            <button onclick="openUploadModal()" class="w-full sm:w-auto bg-coral hover:bg-coral-dark text-white font-cute text-lg px-6 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                <span>내 작품 올리기</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        
+        <!-- 2. 카테고리 필터 및 검색 바 -->
+        <section class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border-2 border-amber-100/80 mb-8">
+            <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                <!-- 카테고리 탭 -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 no-scrollbar" id="category-tabs">
+                    <button data-cat="전체" class="cat-btn active px-4 py-2 rounded-xl font-cute text-base whitespace-nowrap transition-all bg-mint text-white shadow-sm">
+                        🌈 전체
+                    </button>
+                    <button data-cat="그림/미술" class="cat-btn px-4 py-2 rounded-xl font-cute text-base whitespace-nowrap transition-all bg-slate-100 text-slate-600 hover:bg-mint-light hover:text-mint-dark">
+                        🎨 그림/미술
+                    </button>
+                    <button data-cat="글쓰기/시" class="cat-btn px-4 py-2 rounded-xl font-cute text-base whitespace-nowrap transition-all bg-slate-100 text-slate-600 hover:bg-mint-light hover:text-mint-dark">
+                        ✏️ 글쓰기/시
+                    </button>
+                    <button data-cat="만들기/공예" class="cat-btn px-4 py-2 rounded-xl font-cute text-base whitespace-nowrap transition-all bg-slate-100 text-slate-600 hover:bg-mint-light hover:text-mint-dark">
+                        ✂️ 만들기/공예
+                    </button>
+                    <button data-cat="사진/기타" class="cat-btn px-4 py-2 rounded-xl font-cute text-base whitespace-nowrap transition-all bg-slate-100 text-slate-600 hover:bg-mint-light hover:text-mint-dark">
+                        📸 사진/기타
+                    </button>
+                </div>
+
+                <!-- 검색 입력창 -->
+                <div class="relative w-full lg:w-72 shrink-0">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" placeholder="작품 제목이나 친구 이름 검색..." 
+                        class="w-full pl-10 pr-4 py-2.5 bg-cream border-2 border-amber-100 rounded-2xl text-sm focus:outline-none focus:border-mint transition-colors">
+                </div>
+            </div>
+        </section>
+
+        <!-- 작품 개수 및 안내 -->
+        <div class="flex items-center justify-between mb-4 px-1">
+            <p class="text-sm font-medium text-slate-600">
+                총 <span id="artwork-count" class="font-bold text-coral text-base">0</span>개의 멋진 작품이 전시되어 있어요!
+            </p>
+            <button onclick="resetSampleData()" class="text-xs text-slate-400 hover:text-slate-600 underline" title="초기 샘플 데이터로 되돌립니다">
+                샘플 초기화
+            </button>
+        </div>
+
+        <!-- 3. 작품 갤러리 카드 그리드 -->
+        <section id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 자바스크립트로 카드가 렌더링됩니다 -->
+        </section>
+
+        <!-- 검색 결과 없음 화면 -->
+        <div id="empty-state" class="hidden text-center py-16 bg-white/60 rounded-3xl border-2 border-dashed border-amber-200">
+            <div class="text-5xl mb-3">🔍</div>
+            <h3 class="font-cute text-2xl text-slate-700 mb-1">찾으시는 작품이 아직 없어요!</h3>
+            <p class="text-sm text-slate-500 mb-5">다른 검색어를 입력하거나 첫 번째 작품을 올려보세요.</p>
+            <button onclick="openUploadModal()" class="bg-mint hover:bg-mint-dark text-white font-cute px-5 py-2.5 rounded-xl shadow-sm transition-colors">
+                작품 올리러 가기
+            </button>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-white border-t border-amber-100 py-6 mt-12 text-center text-xs text-slate-400">
+        <p>💛 서로의 작품을 소중히 여기고 따뜻한 응원의 말을 남겨주세요 💛</p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- 모달 1: 작품 올리기 모달 -->
+    <!-- ========================================== -->
+    <div id="upload-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border-4 border-butter-light my-auto relative animate-fade-in">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="font-cute text-2xl text-slate-800 flex items-center gap-2">
+                    <span class="text-2xl">✨</span> 새 작품 전시하기
+                </h2>
+                <button onclick="closeUploadModal()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="upload-form" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">작가 이름 (학년/번호) *</label>
+                        <input type="text" id="input-author" required placeholder="예: 3학년 2반 김민준"
+                            class="w-full px-3.5 py-2.5 bg-cream border-2 border-amber-100 rounded-xl text-sm focus:outline-none focus:border-mint">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">카테고리 *</label>
+                        <select id="input-category" class="w-full px-3.5 py-2.5 bg-cream border-2 border-amber-100 rounded-xl text-sm focus:outline-none focus:border-mint">
+                            <option value="그림/미술">🎨 그림/미술</option>
+                            <option value="글쓰기/시">✏️ 글쓰기/시</option>
+                            <option value="만들기/공예">✂️ 만들기/공예</option>
+                            <option value="사진/기타">📸 사진/기타</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">작품 제목 *</label>
+                    <input type="text" id="input-title" required placeholder="멋진 작품 제목을 지어주세요"
+                        class="w-full px-3.5 py-2.5 bg-cream border-2 border-amber-100 rounded-xl text-sm focus:outline-none focus:border-mint">
+                </div>
+
+                <!-- 이미지 업로드 또는 테마 카드 선택 -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-slate-600">작품 사진 또는 배경 테마</label>
+                        <div class="flex gap-1 bg-slate-100 p-0.5 rounded-lg text-xs">
+                            <button type="button" id="tab-photo" onclick="switchMediaMode('photo')" class="px-2.5 py-1 rounded-md bg-white shadow-sm font-bold text-slate-700">사진 올리기</button>
+                            <button type="button" id="tab-theme" onclick="switchMediaMode('theme')" class="px-2.5 py-1 rounded-md text-slate-500">테마 카드 선택</button>
+                        </div>
+                    </div>
+
+                    <!-- 모드 A: 사진 파일 업로드 -->
+                    <div id="media-photo-box" class="border-2 border-dashed border-mint/60 bg-mint-light/30 rounded-2xl p-4 text-center">
+                        <input type="file" id="input-image" accept="image/*" class="hidden" onchange="handleImagePreview(event)">
+                        <div id="image-preview-wrapper" class="hidden mb-3 relative">
+                            <img id="image-preview" src="" alt="미리보기" class="max-h-44 mx-auto rounded-xl shadow-sm object-contain">
+                            <button type="button" onclick="clearImageSelection()" class="mt-2 text-xs text-coral hover:underline">사진 다시 고르기</button>
+                        </div>
+                        <div id="image-upload-prompt">
+                            <div class="text-3xl mb-1">🖼️</div>
+                            <p class="text-xs text-slate-600 mb-2">직접 그린 그림이나 만든 작품 사진을 올려주세요!</p>
+                            <button type="button" onclick="document.getElementById('input-image').click()" class="px-4 py-1.5 bg-white border border-mint text-mint-dark font-bold text-xs rounded-xl shadow-sm hover:bg-mint-light transition-colors">
+                                내 기기에서 사진 찾기
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 모드 B: 기본 테마 카드 선택 (사진 없을 때 유용) -->
+                    <div id="media-theme-box" class="hidden border-2 border-amber-100 bg-cream rounded-2xl p-3.5">
+                        <p class="text-xs text-slate-500 mb-2">사진이 없어도 괜찮아요! 어울리는 예쁜 카드를 골라보세요.</p>
+                        <div class="grid grid-cols-4 gap-2" id="theme-selector">
+                            <!-- JS로 테마 버튼 생성 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">작품 소개 및 설명 *</label>
+                    <textarea id="input-desc" rows="3" required placeholder="어떤 생각으로 만들었나요? 시나 짧은 글이라면 내용을 적어주세요!"
+                        class="w-full px-3.5 py-2.5 bg-cream border-2 border-amber-100 rounded-xl text-sm focus:outline-none focus:border-mint resize-none"></textarea>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeUploadModal()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-cute text-base transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-coral hover:bg-coral-dark text-white font-cute text-base shadow-md transition-colors">
+                        전시하기 🎉
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 모달 2: 작품 상세 보기 및 응원 댓글 모달 -->
+    <!-- ========================================== -->
+    <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border-4 border-mint-light my-auto relative">
+            <!-- 상단 닫기 버튼 -->
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 z-10 w-9 h-9 bg-white/90 hover:bg-white text-slate-600 rounded-full shadow-md flex items-center justify-center transition-transform hover:scale-105">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 max-h-[88vh] overflow-y-auto md:overflow-hidden">
+                <!-- 왼쪽: 작품 이미지 또는 테마 뷰 -->
+                <div id="detail-media-area" class="bg-cream flex items-center justify-center p-6 min-h-[260px] md:min-h-[450px] border-b md:border-b-0 md:border-r border-amber-100">
+                    <!-- JS로 채워짐 -->
+                </div>
+
+                <!-- 오른쪽: 작품 정보 및 응원 댓글 -->
+                <div class="flex flex-col md:h-[520px] p-6">
+                    <!-- 작품 헤더 정보 -->
+                    <div class="pb-4 border-b border-slate-100">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span id="detail-category" class="px-3 py-1 rounded-full text-xs font-bold bg-mint-light text-mint-dark">
+                                카테고리
+                            </span>
+                            <span id="detail-date" class="text-xs text-slate-400">2026.11.18</span>
+                        </div>
+                        <h2 id="detail-title" class="font-cute text-2xl text-slate-800 mb-1">작품 제목</h2>
+                        <p id="detail-author" class="text-sm font-bold text-coral">작성자 이름</p>
+                    </div>
+
+                    <!-- 작품 설명 본문 (스크롤 가능) -->
+                    <div class="py-3 border-b border-slate-100 max-h-32 overflow-y-auto">
+                        <p id="detail-desc" class="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
+                            작품 설명 내용
+                        </p>
+                    </div>
+
+                    <!-- 좋아요 & 삭제 액션 바 -->
+                    <div class="py-2.5 flex items-center justify-between border-b border-slate-100">
+                        <button id="detail-like-btn" onclick="toggleDetailLike()" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-coral-light text-coral font-bold text-sm hover:bg-coral hover:text-white transition-colors">
+                            <i data-lucide="heart" class="w-4 h-4 fill-current"></i>
+                            <span>좋아요 <span id="detail-likes-count">0</span></span>
+                        </button>
+
+                        <!-- 삭제 버튼 (2단계 확인 UI 포함) -->
+                        <div id="delete-action-wrapper">
+                            <button onclick="showDeleteConfirm()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 작품 삭제
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 응원 댓글 목록 영역 -->
+                    <div class="flex-1 overflow-y-auto py-3 space-y-2.5 min-h-[120px]" id="detail-comments-list">
+                        <!-- 댓글 아이템들이 렌더링됨 -->
+                    </div>
+
+                    <!-- 응원 댓글 작성 폼 -->
+                    <form id="comment-form" onsubmit="handleAddComment(event)" class="pt-3 border-t border-slate-100 mt-auto">
+                        <div class="flex gap-2 mb-2">
+                            <input type="text" id="comment-author" required placeholder="내 이름" 
+                                class="w-1/3 px-3 py-2 bg-cream border border-amber-200 rounded-xl text-xs focus:outline-none focus:border-mint">
+                            <input type="text" id="comment-text" required placeholder="따뜻한 응원 한마디를 남겨주세요!" 
+                                class="w-2/3 px-3 py-2 bg-cream border border-amber-200 rounded-xl text-xs focus:outline-none focus:border-mint">
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-mint hover:bg-mint-dark text-white font-cute text-sm rounded-xl shadow-sm transition-colors">
+                            💌 응원 댓글 남기기
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 모달 3: 학급 이름/인사말 수정 모달 -->
+    <!-- ========================================== -->
+    <div id="class-edit-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border-4 border-butter-light">
+            <h3 class="font-cute text-xl text-slate-800 mb-4 flex items-center gap-2">
+                <span>🏫</span> 우리 반 갤러리 정보 수정
+            </h3>
+            <form onsubmit="saveClassInfo(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">갤러리 이름</label>
+                    <input type="text" id="edit-class-title" required class="w-full px-3.5 py-2.5 bg-cream border-2 border-amber-100 rounded-xl text-sm focus:outline-none focus:border-mint">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">학급 인사말</label>
+                    <input type="text" id="edit-class-subtitle" required class="w-full px-3.5 py-2.5 bg-cream border-2 border-amber-100 rounded-xl text-sm focus:outline-none focus:border-mint">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeEditClassModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-cute">취소</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-mint text-white font-cute shadow-sm">저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 초기 데이터 및 상태 관리
+        // ==========================================
+        const STORAGE_KEY_ARTWORKS = 'class_gallery_artworks_v1';
+        const STORAGE_KEY_CLASS_INFO = 'class_gallery_info_v1';
+        const STORAGE_KEY_LIKED = 'class_gallery_liked_ids_v1';
+
+        // 사진이 없을 때 선택할 수 있는 파스텔 테마 카드 프리셋
+        const CARD_THEMES = [
+            { id: 'pink-blossom', bg: 'from-pink-100 to-rose-200', emoji: '🌸', label: '봄날 벚꽃' },
+            { id: 'sky-dream', bg: 'from-sky-100 to-indigo-200', emoji: '🚀', label: '푸른 꿈' },
+            { id: 'warm-poem', bg: 'from-amber-100 to-orange-200', emoji: '📜', label: '따뜻한 시' },
+            { id: 'mint-craft', bg: 'from-emerald-100 to-teal-200', emoji: '🤖', label: '뚝딱 공작' },
+            { id: 'sunny-nature', bg: 'from-yellow-100 to-lime-200', emoji: '🌻', label: '초록 자연' },
+            { id: 'purple-magic', bg: 'from-purple-100 to-fuchsia-200', emoji: '🦄', label: '상상 나라' },
+            { id: 'ocean-star', bg: 'from-cyan-100 to-blue-200', emoji: '🐳', label: '바다 여행' },
+            { id: 'sweet-heart', bg: 'from-red-100 to-pink-200', emoji: '💝', label: '사랑 가득' }
+        ];
+
+        // 풍성한 초기 샘플 데이터 (SVG 일러스트 데이터 URL 및 테마 카드 조화)
+        const INITIAL_ARTWORKS = [
+            {
+                id: 'art-1',
+                title: '봄날의 벚꽃나무 아래서',
+                author: '3학년 2반 김서연',
+                category: '그림/미술',
+                date: '2026.11.12',
+                mediaType: 'svg',
+                svgType: 'cherry-blossom',
+                themeId: 'pink-blossom',
+                description: '학교 운동장 옆에 활짝 핀 벚꽃나무를 수채화 물감으로 그려보았습니다. 분홍색 꽃잎이 바람에 날리는 모습을 표현하려고 붓을 톡톡 두드려 그렸어요!',
+                likes: 14,
+                comments: [
+                    { author: '이준호', text: '우와 색깔이 진짜 부드럽고 예뻐요! 봄이 온 것 같아요 🌸', date: '11.12' },
+                    { author: '담임선생님', text: '서연이의 따뜻한 시선이 그림에 고스란히 담겼네요. 참 잘했어요!', date: '11.13' }
+                ]
+            },
+            {
+                id: 'art-2',
+                title: '내가 꿈꾸는 하늘 나는 미래 도시',
+                author: '3학년 2반 박지훈',
+                category: '그림/미술',
+                date: '2026.11.14',
+                mediaType: 'svg',
+                svgType: 'future-city',
+                themeId: 'sky-dream',
+                description: '2050년에는 자동차가 하늘을 날아다니고, 구름 위에 학교가 있을 것 같아요. 태양열과 바람으로 움직이는 친환경 미래 도시를 상상해서 그렸습니다.',
+                likes: 19,
+                comments: [
+                    { author: '최수아', text: '구름 위 학교 진짜 다니고 싶다! 지훈이 상상력 최고👍', date: '11.14' }
+                ]
+            },
+            {
+                id: 'art-3',
+                title: '동시: 우리 가족 저녁 시간',
+                author: '3학년 2반 최수아',
+                category: '글쓰기/시',
+                date: '2026.11.15',
+                mediaType: 'theme',
+                themeId: 'warm-poem',
+                description: '보글보글 된장찌개 끓는 소리\n달그락달그락 숟가락 놓는 소리\n\n"오늘 학교에서 뭐 했니?"\n엄마의 다정한 물음에\n내 입에서 이야기꽃이 활짝 핍니다.\n\n우리 집 식탁은\n세상에서 제일 따뜻한 웃음 발전소!',
+                likes: 22,
+                comments: [
+                    { author: '김서연', text: '웃음 발전소라는 표현이 너무 귀여워! 읽으니까 배고파져요 ㅎㅎ', date: '11.15' },
+                    { author: '정우성', text: '우리 집 저녁 시간이랑 똑같아서 공감이 많이 돼요!', date: '11.16' }
+                ]
+            },
+            {
+                id: 'art-4',
+                title: '우유팩과 병뚜껑으로 만든 분리수거 로봇',
+                author: '3학년 2반 정우성',
+                category: '만들기/공예',
+                date: '2026.11.16',
+                mediaType: 'svg',
+                svgType: 'robot',
+                themeId: 'mint-craft',
+                description: '집에서 다 마신 우유팩을 씻어서 몸통을 만들고, 알록달록한 페트병 뚜껑으로 눈과 단추를 붙였어요. 지구를 지키는 청소 로봇 "에코봇"입니다!',
+                likes: 17,
+                comments: [
+                    { author: '박지훈', text: '병뚜껑 눈이 진짜 로봇 같아요! 팔도 움직이나요?', date: '11.16' }
+                ]
+            },
+            {
+                id: 'art-5',
+                title: '등굣길에 만난 네잎클로버와 무지개',
+                author: '3학년 2반 한소율',
+                category: '사진/기타',
+                date: '2026.11.17',
+                mediaType: 'svg',
+                svgType: 'clover',
+                themeId: 'sunny-nature',
+                description: '아침에 비가 그치고 학교 오는 길 화단에서 행운의 네잎클로버를 찾았어요! 우리 반 친구들 모두에게 좋은 일만 가득하길 바라며 사진을 찍었습니다.',
+                likes: 25,
+                comments: [
+                    { author: '이준호', text: '소율이 덕분에 오늘 하루 기분이 좋아졌어! 고마워🍀', date: '11.17' }
+                ]
+            }
+        ];
+
+        // 전역 상태 변수
+        let artworks = [];
+        let likedArtworks = new Set();
+        let currentCategory = '전체';
+        let currentSearch = '';
+        let currentDetailId = null;
+        let selectedMediaMode = 'photo';
+        let uploadedImageBase64 = null;
+        let selectedThemeId = CARD_THEMES[0].id;
+
+        // ==========================================
+        // 2. 초기화 및 로컬 스토리지 동기화
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadClassInfo();
+            loadArtworks();
+            renderThemeSelector();
+            setupEventListeners();
+            renderGallery();
+            lucide.createIcons();
+        });
+
+        function loadClassInfo() {
+            const saved = localStorage.getItem(STORAGE_KEY_CLASS_INFO);
+            if (saved) {
+                const info = JSON.parse(saved);
+                document.getElementById('class-title').textContent = info.title;
+                document.getElementById('class-subtitle').textContent = info.subtitle;
+            }
+        }
+
+        function loadArtworks() {
+            const savedArt = localStorage.getItem(STORAGE_KEY_ARTWORKS);
+            if (savedArt) {
+                artworks = JSON.parse(savedArt);
+            } else {
+                artworks = [...INITIAL_ARTWORKS];
+                saveArtworks();
+            }
+
+            const savedLiked = localStorage.getItem(STORAGE_KEY_LIKED);
+            if (savedLiked) {
+                likedArtworks = new Set(JSON.parse(savedLiked));
+            }
+        }
+
+        function saveArtworks() {
+            try {
+                localStorage.setItem(STORAGE_KEY_ARTWORKS, JSON.stringify(artworks));
+            } catch (e) {
+                showToast('저장 공간이 부족해요. 이미지 크기를 줄여서 올려주세요!', 'error');
+            }
+        }
+
+        function saveLikedState() {
+            localStorage.setItem(STORAGE_KEY_LIKED, JSON.stringify([...likedArtworks]));
+        }
+
+        function resetSampleData() {
+            artworks = [...INITIAL_ARTWORKS];
+            likedArtworks.clear();
+            saveArtworks();
+            saveLikedState();
+            renderGallery();
+            showToast('초기 샘플 작품으로 깔끔하게 되돌렸어요! ✨');
+        }
+
+        // ==========================================
+        // 3. 귀여운 SVG 일러스트 생성기 (샘플 작품용)
+        // ==========================================
+        function getIllustrationSVG(type) {
+            switch (type) {
+                case 'cherry-blossom':
+                    return `
+                    <svg viewBox="0 0 400 280" class="w-full h-full object-cover">
+                        <defs>
+                            <linearGradient id="skyPink" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#E0F2FE"/>
+                                <stop offset="100%" stop-color="#FCE7F3"/>
+                            </linearGradient>
+                        </defs>
+                        <rect width="400" height="280" fill="url(#skyPink)"/>
+                        <ellipse cx="200" cy="270" rx="240" ry="45" fill="#BBF7D0"/>
+                        <!-- 나무 기둥 -->
+                        <path d="M185 250 Q190 180 175 130 M215 250 Q210 180 225 130 M195 180 L140 140 M205 170 L260 130" stroke="#854D0E" stroke-width="14" stroke-linecap="round" fill="none"/>
+                        <!-- 풍성한 벚꽃 구름 -->
+                        <circle cx="200" cy="105" r="65" fill="#FBCFE8"/>
+                        <circle cx="145" cy="125" r="50" fill="#F9A8D4"/>
+                        <circle cx="255" cy="125" r="50" fill="#F9A8D4"/>
+                        <circle cx="170" cy="80" r="45" fill="#FDF2F8"/>
+                        <circle cx="230" cy="85" r="45" fill="#FBCFE8"/>
+                        <!-- 흩날리는 꽃잎 -->
+                        <circle cx="90" cy="170" r="5" fill="#F472B6"/>
+                        <circle cx="310" cy="160" r="6" fill="#F472B6"/>
+                        <circle cx="120" cy="210" r="4" fill="#F9A8D4"/>
+                        <circle cx="280" cy="200" r="5" fill="#F9A8D4"/>
+                        <circle cx="70" cy="110" r="4" fill="#FDF2F8"/>
+                    </svg>`;
+                case 'future-city':
+                    return `
+                    <svg viewBox="0 0 400 280" class="w-full h-full object-cover">
+                        <defs>
+                            <linearGradient id="futureSky" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#38BDF8"/>
+                                <stop offset="100%" stop-color="#BAE6FD"/>
+                            </linearGradient>
+                        </defs>
+                        <rect width="400" height="280" fill="url(#futureSky)"/>
+                        <circle cx="330" cy="60" r="28" fill="#FDE047"/>
+                        <!-- 구름 섬 -->
+                        <ellipse cx="200" cy="215" rx="140" ry="32" fill="#FFFFFF"/>
+                        <circle cx="110" cy="205" r="28" fill="#FFFFFF"/>
+                        <circle cx="290" cy="205" r="28" fill="#FFFFFF"/>
+                        <!-- 미래 빌딩 & 학교 -->
+                        <rect x="135" y="120" width="45" height="85" rx="10" fill="#818CF8"/>
+                        <rect x="190" y="95" width="55" height="110" rx="12" fill="#34D399"/>
+                        <rect x="255" y="135" width="35" height="70" rx="8" fill="#F472B6"/>
+                        <!-- 창문 -->
+                        <circle cx="217" cy="125" r="10" fill="#FEF08A"/>
+                        <rect x="148" y="140" width="18" height="12" rx="4" fill="#E0E7FF"/>
+                        <!-- 하늘 나는 로켓 자동차 -->
+                        <ellipse cx="95" cy="85" rx="26" ry="12" fill="#FB7185"/>
+                        <path d="M85 75 Q95 60 105 75" fill="#E0F2FE"/>
+                        <line x1="50" y1="85" x2="65" y2="85" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+                    </svg>`;
+                case 'robot':
+                    return `
+                    <svg viewBox="0 0 400 280" class="w-full h-full object-cover">
+                        <rect width="400" height="280" fill="#ECFDF5"/>
+                        <circle cx="200" cy="140" r="105" fill="#D1FAE5"/>
+                        <!-- 안테나 -->
+                        <line x1="200" y1="45" x2="200" y2="70" stroke="#0D9488" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="200" cy="40" r="9" fill="#FF7E67"/>
+                        <!-- 로봇 머리 (우유팩) -->
+                        <rect x="155" y="70" width="90" height="65" rx="14" fill="#FFFFFF" stroke="#14B8A6" stroke-width="4"/>
+                        <!-- 병뚜껑 눈 -->
+                        <circle cx="180" cy="100" r="11" fill="#3B82F6"/>
+                        <circle cx="183" cy="97" r="3" fill="#FFFFFF"/>
+                        <circle cx="220" cy="100" r="11" fill="#F59E0B"/>
+                        <circle cx="223" cy="97" r="3" fill="#FFFFFF"/>
+                        <path d="M188 120 Q200 128 212 120" stroke="#0F766E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                        <!-- 로봇 몸통 -->
+                        <rect x="140" y="145" width="120" height="85" rx="16" fill="#5EEAD4" stroke="#0D9488" stroke-width="4"/>
+                        <!-- 재활용 마크 심장 -->
+                        <circle cx="200" cy="185" r="20" fill="#FFFFFF"/>
+                        <text x="200" y="192" font-size="20" text-anchor="middle">♻️</text>
+                        <!-- 팔 -->
+                        <rect x="105" y="155" width="28" height="14" rx="7" fill="#FBBF24"/>
+                        <rect x="267" y="155" width="28" height="14" rx="7" fill="#FBBF24"/>
+                    </svg>`;
+                case 'clover':
+                    return `
+                    <svg viewBox="0 0 400 280" class="w-full h-full object-cover">
+                        <rect width="400" height="280" fill="#FEFCE8"/>
+                        <!-- 무지개 -->
+                        <path d="M60 220 A 140 140 0 0 1 340 220" stroke="#FCA5A5" stroke-width="12" fill="none"/>
+                        <path d="M72 220 A 128 128 0 0 1 328 220" stroke="#FDE047" stroke-width="12" fill="none"/>
+                        <path d="M84 220 A 116 116 0 0 1 316 220" stroke="#86EFAC" stroke-width="12" fill="none"/>
+                        <path d="M96 220 A 104 104 0 0 1 304 220" stroke="#93C5FD" stroke-width="12" fill="none"/>
+                        <!-- 네잎클로버 -->
+                        <path d="M200 165 Q200 215 215 240" stroke="#16A34A" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <circle cx="182" cy="145" r="22" fill="#4ADE80"/>
+                        <circle cx="218" cy="145" r="22" fill="#22C55E"/>
+                        <circle cx="182" cy="180" r="22" fill="#22C55E"/>
+                        <circle cx="218" cy="180" r="22" fill="#4ADE80"/>
+                        <circle cx="200" cy="162" r="8" fill="#15803D"/>
+                    </svg>`;
+                default:
+                    return '';
+            }
+        }
+
+        // ==========================================
+        // 4. 갤러리 렌더링 로직
+        // ==========================================
+        function renderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            const emptyState = document.getElementById('empty-state');
+            const countEl = document.getElementById('artwork-count');
+
+            // 필터링 (카테고리 + 검색어)
+            const filtered = artworks.filter(art => {
+                const matchCat = currentCategory === '전체' || art.category === currentCategory;
+                const query = currentSearch.trim().toLowerCase();
+                const matchSearch = !query || 
+                    art.title.toLowerCase().includes(query) || 
+                    art.author.toLowerCase().includes(query) ||
+                    art.description.toLowerCase().includes(query);
+                return matchCat && matchSearch;
+            });
+
+            countEl.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(art => {
+                const isLiked = likedArtworks.has(art.id);
+                const mediaHtml = renderCardMedia(art);
+
+                return `
+                <article class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border-2 border-amber-100/80 flex flex-col card-hover">
+                    <!-- 상단 작품 썸네일 영역 (클릭 시 상세 보기) -->
+                    <div onclick="openDetailModal('${art.id}')" class="relative h-52 bg-cream cursor-pointer overflow-hidden group">
+                        ${mediaHtml}
+                        <div class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors flex items-center justify-center">
+                            <span class="opacity-0 group-hover:opacity-100 bg-white/95 text-slate-800 font-cute text-sm px-4 py-1.5 rounded-full shadow-md transition-opacity">
+                                크게 보기 🔍
+                            </span>
+                        </div>
+                        <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-white/95 text-slate-700 shadow-sm">
+                            ${art.category}
+                        </span>
+                    </div>
+
+                    <!-- 하단 작품 정보 영역 -->
+                    <div class="p-5 flex-1 flex flex-col">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                            <span class="font-bold text-coral bg-coral-light px-2.5 py-0.5 rounded-lg">${escapeHtml(art.author)}</span>
+                            <span>${art.date}</span>
+                        </div>
+
+                        <h3 onclick="openDetailModal('${art.id}')" class="font-cute text-xl text-slate-800 hover:text-mint-dark cursor-pointer transition-colors mb-2 line-clamp-1">
+                            ${escapeHtml(art.title)}
+                        </h3>
+
+                        <p onclick="openDetailModal('${art.id}')" class="text-sm text-slate-500 line-clamp-2 mb-4 flex-1 cursor-pointer leading-relaxed">
+                            ${escapeHtml(art.description)}
+                        </p>
+
+                        <!-- 카드 바닥: 좋아요 & 댓글 버튼 -->
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <button onclick="toggleLike('${art.id}', event)" 
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold transition-all ${isLiked ? 'bg-coral text-white shadow-sm' : 'bg-coral-light/70 text-coral hover:bg-coral-light'}">
+                                <i data-lucide="heart" class="w-4 h-4 ${isLiked ? 'fill-current' : ''}"></i>
+                                <span>${art.likes}</span>
+                            </button>
+
+                            <button onclick="openDetailModal('${art.id}')" 
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-mint-light/70 text-mint-dark hover:bg-mint-light transition-colors">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                <span>응원 ${art.comments.length}</span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function renderCardMedia(art) {
+            if (art.mediaType === 'image' && art.imageUrl) {
+                return `<img src="${art.imageUrl}" alt="${escapeHtml(art.title)}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" onerror="this.onerror=null; this.src='https://placehold.co/400x280/FFFDF7/FF7E67?text=Artwork';">`;
+            }
+            if (art.mediaType === 'svg' && art.svgType) {
+                return getIllustrationSVG(art.svgType);
+            }
+            // 테마 카드 렌더링 (시나 글쓰기 등에 적합)
+            const theme = CARD_THEMES.find(t => t.id === art.themeId) || CARD_THEMES[0];
+            return `
+            <div class="w-full h-full bg-gradient-to-br ${theme.bg} p-5 flex flex-col items-center justify-center text-center">
+                <div class="text-4xl mb-2 drop-shadow-sm">${theme.emoji}</div>
+                <p class="font-cute text-slate-700/90 text-base line-clamp-3 px-2 leading-snug">
+                    "${escapeHtml(art.description.split('\n')[0])}"
+                </p>
+            </div>`;
+        }
+
+        // ==========================================
+        // 5. 이벤트 리스너 및 필터링
+        // ==========================================
+        function setupEventListeners() {
+            // 카테고리 버튼 클릭
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.cat-btn').forEach(b => {
+                        b.classList.remove('bg-mint', 'text-white', 'shadow-sm');
+                        b.classList.add('bg-slate-100', 'text-slate-600');
+                    });
+                    btn.classList.remove('bg-slate-100', 'text-slate-600');
+                    btn.classList.add('bg-mint', 'text-white', 'shadow-sm');
+
+                    currentCategory = btn.dataset.cat;
+                    renderGallery();
+                });
+            });
+
+            // 실시간 검색 입력
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                currentSearch = e.target.value;
+                renderGallery();
+            });
+
+            // 작품 업로드 폼 제출
+            document.getElementById('upload-form').addEventListener('submit', handleUploadSubmit);
+        }
+
+        // ==========================================
+        // 6. 좋아요 토글 기능
+        // ==========================================
+        function toggleLike(id, event) {
+            if (event) event.stopPropagation();
+            const art = artworks.find(a => a.id === id);
+            if (!art) return;
+
+            if (likedArtworks.has(id)) {
+                likedArtworks.delete(id);
+                art.likes = Math.max(0, art.likes - 1);
+            } else {
+                likedArtworks.add(id);
+                art.likes += 1;
+                showToast('친구 작품에 따뜻한 하트를 보냈어요! ❤️');
+            }
+
+            saveArtworks();
+            saveLikedState();
+            renderGallery();
+
+            // 상세 모달이 열려있다면 모달 내부 카운트도 즉시 업데이트
+            if (currentDetailId === id) {
+                updateDetailLikeUI(art);
+            }
+        }
+
+        // ==========================================
+        // 7. 작품 올리기 모달 관련 기능
+        // ==========================================
+        function renderThemeSelector() {
+            const container = document.getElementById('theme-selector');
+            container.innerHTML = CARD_THEMES.map(theme => `
+                <button type="button" onclick="selectTheme('${theme.id}')" data-theme-id="${theme.id}"
+                    class="theme-opt-btn p-2 rounded-xl bg-gradient-to-br ${theme.bg} border-2 ${theme.id === selectedThemeId ? 'border-coral scale-105 shadow-sm' : 'border-transparent opacity-80 hover:opacity-100'} flex flex-col items-center transition-all">
+                    <span class="text-xl">${theme.emoji}</span>
+                    <span class="text-[10px] font-bold text-slate-700 mt-0.5">${theme.label}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectTheme(id) {
+            selectedThemeId = id;
+            renderThemeSelector();
+        }
+
+        function switchMediaMode(mode) {
+            selectedMediaMode = mode;
+            const photoBox = document.getElementById('media-photo-box');
+            const themeBox = document.getElementById('media-theme-box');
+            const tabPhoto = document.getElementById('tab-photo');
+            const tabTheme = document.getElementById('tab-theme');
+
+            if (mode === 'photo') {
+                photoBox.classList.remove('hidden');
+                themeBox.classList.add('hidden');
+                tabPhoto.classList.add('bg-white', 'shadow-sm', 'font-bold', 'text-slate-700');
+                tabPhoto.classList.remove('text-slate-500');
+                tabTheme.classList.remove('bg-white', 'shadow-sm', 'font-bold', 'text-slate-700');
+                tabTheme.classList.add('text-slate-500');
+            } else {
+                photoBox.classList.add('hidden');
+                themeBox.classList.remove('hidden');
+                tabTheme.classList.add('bg-white', 'shadow-sm', 'font-bold', 'text-slate-700');
+                tabTheme.classList.remove('text-slate-500');
+                tabPhoto.classList.remove('bg-white', 'shadow-sm', 'font-bold', 'text-slate-700');
+                tabPhoto.classList.add('text-slate-500');
+            }
+        }
+
+        function handleImagePreview(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 브라우저 localStorage 용량 보호를 위해 캔버스로 이미지 리사이징 압축
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    uploadedImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+                    document.getElementById('image-preview').src = uploadedImageBase64;
+                    document.getElementById('image-preview-wrapper').classList.remove('hidden');
+                    document.getElementById('image-upload-prompt').classList.add('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImageSelection() {
+            uploadedImageBase64 = null;
+            document.getElementById('input-image').value = '';
+            document.getElementById('image-preview-wrapper').classList.add('hidden');
+            document.getElementById('image-upload-prompt').classList.remove('hidden');
+        }
+
+        function openUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+            document.getElementById('upload-modal').classList.add('flex');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+            document.getElementById('upload-modal').classList.remove('flex');
+            document.getElementById('upload-form').reset();
+            clearImageSelection();
+            switchMediaMode('photo');
+        }
+
+        function handleUploadSubmit(e) {
+            e.preventDefault();
+            const author = document.getElementById('input-author').value.trim();
+            const category = document.getElementById('input-category').value;
+            const title = document.getElementById('input-title').value.trim();
+            const description = document.getElementById('input-desc').value.trim();
+
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+
+            const useImage = selectedMediaMode === 'photo' && uploadedImageBase64;
+
+            const newArtwork = {
+                id: 'art-' + Date.now(),
+                title,
+                author,
+                category,
+                date: dateStr,
+                mediaType: useImage ? 'image' : 'theme',
+                imageUrl: useImage ? uploadedImageBase64 : null,
+                themeId: selectedThemeId,
+                description,
+                likes: 0,
+                comments: []
+            };
+
+            artworks.unshift(newArtwork);
+            saveArtworks();
+            closeUploadModal();
+            renderGallery();
+            showToast('짜잔! 멋진 작품이 우리 반 갤러리에 전시되었어요 🎉');
+        }
+
+        // ==========================================
+        // 8. 작품 상세 보기 & 응원 댓글 모달
+        // ==========================================
+        function openDetailModal(id) {
+            const art = artworks.find(a => a.id === id);
+            if (!art) return;
+
+            currentDetailId = id;
+
+            // 왼쪽 미디어 영역 렌더링
+            const mediaArea = document.getElementById('detail-media-area');
+            if (art.mediaType === 'image' && art.imageUrl) {
+                mediaArea.innerHTML = `<img src="${art.imageUrl}" alt="${escapeHtml(art.title)}" class="max-h-[420px] w-auto rounded-2xl shadow-md object-contain">`;
+            } else if (art.mediaType === 'svg' && art.svgType) {
+                mediaArea.innerHTML = `<div class="w-full h-72 md:h-96 rounded-2xl overflow-hidden shadow-md">${getIllustrationSVG(art.svgType)}</div>`;
+            } else {
+                const theme = CARD_THEMES.find(t => t.id === art.themeId) || CARD_THEMES[0];
+                mediaArea.innerHTML = `
+                <div class="w-full h-full min-h-[280px] rounded-2xl bg-gradient-to-br ${theme.bg} p-8 flex flex-col items-center justify-center text-center shadow-inner">
+                    <div class="text-6xl mb-4 animate-bounce">${theme.emoji}</div>
+                    <h4 class="font-cute text-2xl text-slate-800 mb-2">${escapeHtml(art.title)}</h4>
+                    <span class="px-3 py-1 bg-white/80 rounded-full text-xs font-bold text-slate-600">${theme.label} 카드</span>
+                </div>`;
+            }
+
+            // 오른쪽 텍스트 정보 채우기
+            document.getElementById('detail-category').textContent = art.category;
+            document.getElementById('detail-date').textContent = art.date;
+            document.getElementById('detail-title').textContent = art.title;
+            document.getElementById('detail-author').textContent = art.author;
+            document.getElementById('detail-desc').textContent = art.description;
+
+            updateDetailLikeUI(art);
+            resetDeleteConfirmUI();
+            renderDetailComments(art);
+
+            const modal = document.getElementById('detail-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeDetailModal() {
+            currentDetailId = null;
+            const modal = document.getElementById('detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function updateDetailLikeUI(art) {
+            const isLiked = likedArtworks.has(art.id);
+            const btn = document.getElementById('detail-like-btn');
+            document.getElementById('detail-likes-count').textContent = art.likes;
+
+            if (isLiked) {
+                btn.className = 'flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-coral text-white font-bold text-sm shadow-sm transition-all';
+            } else {
+                btn.className = 'flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-coral-light text-coral font-bold text-sm hover:bg-coral hover:text-white transition-all';
+            }
+        }
+
+        function toggleDetailLike() {
+            if (currentDetailId) {
+                toggleLike(currentDetailId);
+            }
+        }
+
+        function renderDetailComments(art) {
+            const list = document.getElementById('detail-comments-list');
+            if (!art.comments || art.comments.length === 0) {
+                list.innerHTML = `
+                <div class="text-center py-6 text-slate-400 text-xs">
+                    아직 응원 댓글이 없어요.<br>첫 번째 응원 메시지를 남겨주세요! 💌
+                </div>`;
+                return;
+            }
+
+            list.innerHTML = art.comments.map(c => `
+                <div class="bg-cream rounded-2xl p-3 border border-amber-100/80">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-bold text-mint-dark">😊 ${escapeHtml(c.author)}</span>
+                        <span class="text-[11px] text-slate-400">${c.date}</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-700 leading-snug">${escapeHtml(c.text)}</p>
+                </div>
+            `).join('');
+        }
+
+        function handleAddComment(e) {
+            e.preventDefault();
+            if (!currentDetailId) return;
+
+            const art = artworks.find(a => a.id === currentDetailId);
+            if (!art) return;
+
+            const authorInput = document.getElementById('comment-author');
+            const textInput = document.getElementById('comment-text');
+
+            const today = new Date();
+            const shortDate = `${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+
+            art.comments.push({
+                author: authorInput.value.trim(),
+                text: textInput.value.trim(),
+                date: shortDate
+            });
+
+            saveArtworks();
+            textInput.value = '';
+            renderDetailComments(art);
+            renderGallery();
+            showToast('따뜻한 응원 댓글이 등록되었어요! 💌');
+
+            // 댓글 목록 맨 아래로 스크롤
+            const list = document.getElementById('detail-comments-list');
+            list.scrollTop = list.scrollHeight;
+        }
+
+        // 작품 삭제 2단계 확인 UI (confirm() 대신 인라인 확인 버튼 제공)
+        function showDeleteConfirm() {
+            const wrapper = document.getElementById('delete-action-wrapper');
+            wrapper.innerHTML = `
+                <div class="flex items-center gap-1.5 bg-red-50 px-2.5 py-1 rounded-xl border border-red-200">
+                    <span class="text-[11px] font-bold text-red-600">정말 삭제할까요?</span>
+                    <button onclick="confirmDeleteArtwork()" class="text-[11px] bg-red-500 text-white px-2 py-0.5 rounded-lg font-bold hover:bg-red-600">삭제</button>
+                    <button onclick="resetDeleteConfirmUI()" class="text-[11px] bg-white text-slate-600 px-2 py-0.5 rounded-lg border border-slate-200">취소</button>
+                </div>
+            `;
+        }
+
+        function resetDeleteConfirmUI() {
+            const wrapper = document.getElementById('delete-action-wrapper');
+            wrapper.innerHTML = `
+                <button onclick="showDeleteConfirm()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 작품 삭제
+                </button>
+            `;
+            lucide.createIcons();
+        }
+
+        function confirmDeleteArtwork() {
+            if (!currentDetailId) return;
+            artworks = artworks.filter(a => a.id !== currentDetailId);
+            saveArtworks();
+            closeDetailModal();
+            renderGallery();
+            showToast('작품이 갤러리에서 내려졌어요.');
+        }
+
+        // ==========================================
+        // 9. 학급 정보 수정 모달 & 유틸리티
+        // ==========================================
+        function openEditClassModal() {
+            document.getElementById('edit-class-title').value = document.getElementById('class-title').textContent.trim();
+            document.getElementById('edit-class-subtitle').value = document.getElementById('class-subtitle').textContent.trim();
+            const modal = document.getElementById('class-edit-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditClassModal() {
+            const modal = document.getElementById('class-edit-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveClassInfo(e) {
+            e.preventDefault();
+            const title = document.getElementById('edit-class-title').value.trim();
+            const subtitle = document.getElementById('edit-class-subtitle').value.trim();
+
+            document.getElementById('class-title').textContent = title;
+            document.getElementById('class-subtitle').textContent = subtitle;
+            document.title = title;
+
+            localStorage.setItem(STORAGE_KEY_CLASS_INFO, JSON.stringify({ title, subtitle }));
+            closeEditClassModal();
+            showToast('우리 반 갤러리 이름이 멋지게 바뀌었어요! 🏫');
+        }
+
+        // 토스트 알림 메시지 표시 함수
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-slate-800';
+            toast.className = `${bgColor} text-white text-sm font-medium px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<span>${message}</span>`;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        // XSS 방지를 위한 HTML 이스케이프 헬퍼
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
